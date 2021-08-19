@@ -106,7 +106,7 @@ def train_test_split_SSIM(x, y, x_len, x_before_len, model_params, SEED):
 def test_qld_single_station():
     train_sampling_params = {
         'dim_in': 3,
-        'output_length': 2,
+        'output_length': 6,
         'min_before': 10,
         'max_before': 10,
         'min_after': 10,
@@ -116,7 +116,7 @@ def test_qld_single_station():
 
     test_sampling_params = {
         'dim_in': 3,
-        'output_length': 2,
+        'output_length': 6,
         'min_before': 10,
         'max_before': 10,
         'min_after': 10,
@@ -198,7 +198,7 @@ def test_qld_single_station():
 
 
 
-    return (x_train, y_train, x_train_len, x_train_before_len) , (x_test, y_test, x_test_len, x_test_before_len)
+    return (x_train, y_train, x_train_len, x_train_before_len) , (x_test, y_test, x_test_len, x_test_before_len), (scaler_x, scaler_y)
 
 
 

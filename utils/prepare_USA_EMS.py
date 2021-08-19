@@ -59,7 +59,7 @@ def preprocess_df(df):
 
     ## some variables are not used in training the model, based on the performance evaluation
 
-    tw = df['nitrate_con'].values.copy().reshape(-1, 1)
+    tw = df['temp_water'].values.copy().reshape(-1, 1)
 
     # Standlization, use StandardScaler
     scaler_x = MinMaxScaler()
@@ -94,7 +94,7 @@ def train_val_test_generate(dataframe, model_params):
     '''
 
     train_val_test_x, train_val_test_y, len_x_samples, len_before_x_samples = pad_all_cases(
-        dataframe, dataframe['nitrate_con'].values, model_params,
+        dataframe, dataframe['temp_water'].values, model_params,
         model_params['min_before'], model_params['max_before'],
         model_params['min_after'], model_params['max_after'],
         model_params['output_length'])
@@ -149,7 +149,7 @@ def train_test_split_SSIM(x, y, x_len, x_before_len, model_params, SEED):
 def test_usa_single_station():
     train_sampling_params = {
         'dim_in': 3,
-        'output_length': 2,
+        'output_length': 6,
         'min_before': 10,
         'max_before': 10,
         'min_after': 10,
@@ -159,7 +159,7 @@ def test_usa_single_station():
 
     test_sampling_params = {
         'dim_in': 3,
-        'output_length': 2,
+        'output_length': 6,
         'min_before': 10,
         'max_before': 10,
         'min_after': 10,
@@ -237,8 +237,8 @@ def test_usa_single_station():
     print('y_test:{}'.format(y_test.shape))
 
     print('split train/test array')
-    x_test_list = np.split(x_test, [10, 12], axis=1)
-    x_train_list = np.split(x_train, [10, 12], axis=1)
+    x_test_list = np.split(x_test, [10, 16], axis=1)
+    x_train_list = np.split(x_train, [10, 16], axis=1)
 
     for i in x_test_list:
         print(i.shape)

@@ -25,14 +25,14 @@ def preprocess_df(df):
     df.set_index('Timestamp', inplace=True)
 
     # single input/output   DO or Nitrate
-    do = df[['Temp']]
+    do = df[['NO3']]
 
     ## some variables are not used in training the model, based on the performance evaluation
 
     # Standlization, use StandardScaler
     scaler_x = MinMaxScaler()
-    scaler_x.fit(do['Temp'].values.reshape(-1, 1))
-    do['Temp'] = scaler_x.transform(do['Temp'].values.reshape(
+    scaler_x.fit(do['NO3'].values.reshape(-1, 1))
+    do['NO3'] = scaler_x.transform(do['NO3'].values.reshape(
         -1, 1))
 
     # get data from 2014 and 2015
@@ -63,7 +63,7 @@ def train_val_test_generate(dataframe, model_params):
     '''
 
     train_val_test_x, train_val_test_y, len_x_samples, len_before_x_samples = pad_all_cases(
-        dataframe, dataframe['Temp'].values, model_params,
+        dataframe, dataframe['NO3'].values, model_params,
         model_params['min_before'], model_params['max_before'],
         model_params['min_after'], model_params['max_after'],
         model_params['output_length'])
@@ -628,9 +628,9 @@ if __name__ == "__main__":
     # sample_list_all = sample_list_train + sample_list_test
 
     # generate train/test datasets seperately
-    with open('QLD_Temp_6train1012.json', 'w') as fp:
+    with open('QLD_NO_6train1012.json', 'w') as fp:
         fp.write('\n'.join(json.dumps(i) for i in sample_list_train))
-    with open('QLD_Temp_6test1012.json', 'w') as fp:
+    with open('QLD_NO_6test1012.json', 'w') as fp:
         fp.write('\n'.join(json.dumps(i) for i in sample_list_test))
 
     # print('split train/test array')

@@ -63,7 +63,7 @@ def preprocess_df(df):
     df.drop(['Turbidity'], axis=1, inplace=True)
     df.drop(['Level'], axis=1, inplace=True)
 
-    tw = df['Temp'].values.copy().reshape(-1, 1)
+    tw = df['NO3'].values.copy().reshape(-1, 1)
 
     # Standlization, use StandardScaler
     scaler_x = MinMaxScaler()
@@ -80,10 +80,10 @@ def preprocess_df(df):
     # get data from 2014 and 2015
     # 6，7, 8, 9，10 as train; 11 as test
 
-    df_train_one = df.loc['2019-04-01T00:00':'2019-12-31T23:00'].copy()
+    df_train_one = df.loc['2019-01-01T00:00':'2019-09-30T23:00'].copy()
     # df_train_two = df.loc['2015-06-01T00:00':'2015-10-31T23:30'].copy()
 
-    df_test_one = df.loc['2019-01-01T00:00':'2019-03-31T23:00'].copy()
+    df_test_one = df.loc['2019-10-01T00:00':'2019-12-31T23:00'].copy()
     # df_test_two = df.loc['2015-11-01T00:00':'2015-11-30T23:30'].copy()
 
 
@@ -101,7 +101,7 @@ def train_val_test_generate(dataframe, model_params):
     '''
 
     train_val_test_x, train_val_test_y, len_x_samples, len_before_x_samples = pad_all_cases(
-        dataframe, dataframe['Temp'].values, model_params,
+        dataframe, dataframe['NO3'].values, model_params,
         model_params['min_before'], model_params['max_before'],
         model_params['min_after'], model_params['max_after'],
         model_params['output_length'])

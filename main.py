@@ -180,6 +180,34 @@ def evaluate_iteration(model, criterion, x_test, y_test, x_len, x_before_len):
     return loss.item(), loss_mae, loss_RMSLE, loss_RMSE, loss_dtw
 
 
+
+
+def predict_ts(model, x_test_tensor, y_test_tensor, x_test_len_tensor, x_test_before_len_tensor, scaler_y, max_gap_size=6, BATCH_SIZE=1,device=device):
+    model.eval()
+
+    with torch.no_grad():
+
+            x_test_tensor = np.transpose(x_test_tensor, [1, 0, 2])
+            y_test_tensor = np.transpose(y_test_tensor, [1, 0, 2])
+
+            x_test_tensor = numpy_to_tvar(x_test_tensor)
+            y_test_tensor = numpy_to_tvar(y_test_tensor)
+            x_test_len_tensor = numpy_to_tvar(x_test_len_tensor)
+            x_test_before_len_tensor = numpy_to_tvar(x_test_before_len_tensor)
+
+            output = model(x_test_tensor, y_test_tensor, x_test_len_tensor, x_test_before_len_tensor, 0)
+            output = output.view(-1)
+
+            # scalar
+            output_numpy = output.cpu().data.numpy()
+            output_numpy_origin = scaler_y.inverse_transform(
+            output_numpy.reshape(-1, 1))
+
+    return output_numpy_origin, output_numpy
+
+
+
+
 if __name__ == "__main__":
 
     # model hyperparameters
@@ -194,7 +222,7 @@ if __name__ == "__main__":
     LR = 0.001  # learning rate
     CLIP = 1
     EPOCHS = 500
-    BATCH_SIZE = 10
+    BATCH_SIZE = 1
     N_output=2
 
 
@@ -202,7 +230,7 @@ if __name__ == "__main__":
     ## Different test data
 
     (x_train, y_train, x_train_len, x_train_before_len), (
-    x_test, y_test, x_test_len, x_test_before_len) = test_qld_single_station()
+    x_test, y_test, x_test_len, x_test_before_len),(scaler_x, scaler_y) = test_qld_single_station()
 
     # Model
     glob_attn = Global_Attention(ENC_HID_DIM, DEC_HID_DIM)
@@ -230,9 +258,9 @@ if __name__ == "__main__":
     # initialize the early_stopping object
     # early stopping patience; how long to wait after last time validation loss improved.
     patience = 10
-    early_stopping = EarlyStopping(output_path='checkpoints/EMS_USA_nitrate2_1012_SSIM.pt',
-                                   patience=patience,
-                                   verbose=True)
+    # early_stopping = EarlyStopping(output_path='checkpoints/EMS_USA_Temp6_1012_SSIM.pt',
+    #                                patience=patience,
+    #                                verbose=True)
 
     # best_valid_loss = float('inf')
     # for epoch in range(EPOCHS):
@@ -276,7 +304,7 @@ if __name__ == "__main__":
 
     # # prediction
     #
-    model.load_state_dict(torch.load('checkpoints/EMS_USA_nitrate2_1012_SSIM.pt'))
+    model.load_state_dict(torch.load('checkpoints/EMS_USA_nitrate6_1012_SSIM.pt'))
     
     test_loss, test_mae, test_rmsle, test_rmse, test_tdi = evaluate(model, criterion, x_test, y_test, x_test_len, x_test_before_len)
     
@@ -287,3 +315,67 @@ if __name__ == "__main__":
     print(f'| RMSLE: {test_rmsle:.4f} | Test PPL: {math.exp(test_rmsle):7.4f} |')
     print(f'| RMSE: {test_rmse:.4f} | Test PPL: {math.exp(test_rmse):7.4f} |')
     print(f'| DTW: {test_tdi:.4f} | Test PPL: {math.exp(test_tdi):7.4f} |')
+
+
+
+
+
+    # # get one sample for test
+    case_no = 66
+    print(x_test.shape)
+    print(y_test.shape)
+    print(x_test_len.shape)
+    print(x_test_before_len.shape)
+    x_test = x_test[case_no,:,:]
+    print(x_test)
+    y_test = y_test[case_no,:,:]
+    x_test_len = x_test_len[case_no]
+    x_test_before_len = x_test_before_len[case_no]
+    x_test = np.expand_dims(x_test, axis=0)
+    y_test = np.expand_dims(y_test, axis=0)
+    x_test_len = np.expand_dims(x_test_len, axis=0)
+    x_test_before_len = np.expand_dims(x_test_before_len, axis=0)
+    print(x_test.shape)
+    print(y_test)
+    print(x_test_len.shape)
+    print(x_test_before_len.shape)
+
+
+    outputs_ori, outputs_scal = predict_ts(model, x_test, y_test, x_test_len, x_test_before_len,  scaler_y, max_gap_size=6, BATCH_SIZE=1,device=device)
+    print('*************')
+    x_test = scaler_x.inverse_transform(x_test[0])
+    y_test = scaler_y.inverse_transform(y_test.reshape(1,-1))
+    # print(X_test_left[:,3])
+    # print(X_test_right[:,3])
+    # print(y_test[0])
+    print(x_test[:,0])
+    print(y_test[0])
+    x_test_list = x_test[:,0].tolist()
+    y_test_list = y_test[0].tolist()
+    outputs_ori_list = outputs_ori[:,0].tolist()
+    # print(X_test_right[:,2].shape)
+    # print(y_test[0].shape)
+    print(x_test_list)
+    print(y_test_list)
+    print(outputs_ori_list)
+
+    print('*************')
+    print('outputs_ori:{}'.format(outputs_ori))
+    print('*************')
+    print('outputs_scal:{}'.format(outputs_scal))
+
+    x_test_list[10 : 16] = y_test_list
+    orginal = x_test_list.copy()
+    x_test_list[10 : 16] = outputs_ori_list
+    prediction = x_test_list
+
+    print(orginal)
+    print(prediction)
+
+    # orginal = X_test_left_list + y_test_list + X_test_right_list
+    # prediction = X_test_left_list + outputs_ori_list + X_test_right_list
+
+    plt.plot(orginal, '-')
+    plt.plot(prediction, '*')
+    plt.show()
+

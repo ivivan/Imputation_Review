@@ -12,9 +12,9 @@ import pandas as pd
 from utils.early_stopping import EarlyStopping
 from utils.support import *
 
-# visualization
-from visdom import Visdom
-from torchnet import meter
+# # visualization
+# from visdom import Visdom
+# from torchnet import meter
 # from utils.visual_loss import Visualizer
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker

@@ -9,11 +9,14 @@ from torch.optim.lr_scheduler import StepLR, ExponentialLR
 import numpy as np
 np.set_printoptions(threshold=np.inf)
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 from models.DualHead_NoShare import Shared_Encoder, Cross_Attention, Decoder, DualSSIM
 
 from utils.early_stopping import EarlyStopping
 from utils.prepare_USA_EMS import test_usa_single_station
+# from utils.prepare_QLD import test_qld_single_station
 from utils.support import *
 from utils.metrics import RMSLE
 
@@ -234,7 +237,7 @@ def predict_ts(model, X_test_left, X_test_right, scaler_y, max_gap_size=6, BATCH
             x_test_left_tensor = numpy_to_tvar(x_test_left)
             x_test_right_tensor = numpy_to_tvar(x_test_right)
 
-            output = model(x_test_left_tensor, x_test_right_tensor, empty_y_tensor, 0)
+            output,atten = model(x_test_left_tensor, x_test_right_tensor, empty_y_tensor, 0)
             output = output.view(-1)
 
             # scalar
@@ -275,8 +278,8 @@ if __name__ == "__main__":
 
 
     print('split train/test array')
-    x_test_list = np.split(x_test, [10, 12], axis=1)
-    x_train_list = np.split(x_train, [10, 12], axis=1)
+    x_test_list = np.split(x_test, [10, 16], axis=1)
+    x_train_list = np.split(x_train, [10, 16], axis=1)
 
     # Split input into two
 
@@ -296,7 +299,7 @@ if __name__ == "__main__":
     X_test_left = X_test_left[:940]
     X_test_right = X_test_right[:940]
 
-    # ##0103
+    # # ##0103
     # X_train_left = X_train_left[:4930]
     # X_train_right = X_train_right[:4930]
     # X_test_left = X_test_left[:1600]
@@ -345,7 +348,7 @@ if __name__ == "__main__":
     # initialize the early_stopping object
     # early stopping patience; how long to wait after last time validation loss improved.
     patience = 10
-    early_stopping = EarlyStopping(output_path='checkpoints/EMS_USA_nitrate2_1012_dual.pt',
+    early_stopping = EarlyStopping(output_path='checkpoints/EMS_Temp6_1012.pt',
                                    patience=patience,
                                    verbose=True)
 
@@ -409,7 +412,7 @@ if __name__ == "__main__":
 
     #######
     
-    model.load_state_dict(torch.load('checkpoints/EMS_USA_nitrate2_1012_dual.pt'))
+    model.load_state_dict(torch.load('checkpoints/EMS_Temp6_1012.pt'))
     
     test_loss, test_mae, test_rmsle, test_rmse, test_tdi  = evaluate(model, criterion, X_test_left,X_test_right, y_test)
     
@@ -421,27 +424,94 @@ if __name__ == "__main__":
     print(f'| DTW: {test_tdi:.4f} | Test PPL: {math.exp(test_tdi):7.4f} |')
 
     ##########
+    ### plot results
+
+    # total = X_test_left.shape[0]
+
+    # for i in range(0,total):
+    #     print(i)
+    #     X_test_left_one = X_test_left[i,:,:]
+    #     X_test_right_one = X_test_right[i,:,:]
+    #     y_test_one = y_test[i,:,:]
+    #     X_test_left_one = np.expand_dims(X_test_left_one, axis=0)
+    #     X_test_right_one = np.expand_dims(X_test_right_one, axis=0)
+    #     y_test_one = np.expand_dims(y_test_one, axis=0)
+
+
+    #     outputs_ori, outputs_scal = predict_ts(model, X_test_left_one, X_test_right_one, scaler_y, max_gap_size=6, BATCH_SIZE=1,device=device)
+
+    #     X_test_left_one = scaler_x.inverse_transform(X_test_left[i,:,:])
+    #     X_test_right_one = scaler_x.inverse_transform(X_test_right[i,:,:])
+    #     y_test_one = scaler_y.inverse_transform(y_test_one.reshape(1,-1))
+
+    #     X_test_left_list = X_test_left_one[:,2].tolist()
+    #     X_test_right_list = X_test_right_one[:,2].tolist()
+    #     y_test_list = y_test_one[0].tolist()
+    #     outputs_ori_list = outputs_ori[:,0].tolist()
+
+    #     orginal = X_test_left_list + y_test_list + X_test_right_list
+    #     prediction = X_test_left_list + outputs_ori_list + X_test_right_list
+
+    #     plt.plot(orginal, '-')
+    #     plt.plot(prediction, '*')
+    #     plt.show()
+
+
+
+
+
+    ##########
 
 
 
     # # get one sample for test
-    # X_test_left = X_test_left[10:11,:,:]
-    # X_test_right = X_test_right[10:11,:,:]
-    # y_test = y_test[10:11,:,:]
-    # print(X_test_left.shape)
-    # print(X_test_right.shape)
-    # print(y_test.shape)
+    X_test_left = X_test_left[59:60,:,:]
+    X_test_right = X_test_right[59:60,:,:]
+    y_test = y_test[59:60,:,:]
+    print(X_test_left.shape)
+    print(X_test_right.shape)
+    print(y_test.shape)
 
-    # outputs_ori, outputs_scal = predict_ts(model, X_test_left, X_test_right, scaler_y, max_gap_size=6, BATCH_SIZE=1,device=device)
-    # print('*************')
-    # X_test_left = scaler_x.inverse_transform(X_test_left[0])
-    # X_test_right = scaler_x.inverse_transform(X_test_right[0])
-    # y_test = scaler_y.inverse_transform(y_test.reshape(1,-1))
+    outputs_ori, outputs_scal = predict_ts(model, X_test_left, X_test_right, scaler_y, max_gap_size=6, BATCH_SIZE=1,device=device)
+    print('*************')
+    X_test_left = scaler_x.inverse_transform(X_test_left[0])
+    X_test_right = scaler_x.inverse_transform(X_test_right[0])
+    y_test = scaler_y.inverse_transform(y_test.reshape(1,-1))
     # print(X_test_left[:,3])
     # print(X_test_right[:,3])
     # print(y_test[0])
+    print(X_test_left[:,2])
+    print(X_test_right[:,2])
+    print(y_test[0])
+    X_test_left_list = X_test_left[:,0].tolist()
+    X_test_right_list = X_test_right[:,0].tolist()
+    y_test_list = y_test[0].tolist()
+    outputs_ori_list = outputs_ori[:,0].tolist()
+    # print(X_test_right[:,2].shape)
+    # print(y_test[0].shape)
+    print(X_test_left_list)
+    print(X_test_right_list)
+    print(y_test_list)
+    print(outputs_ori_list)
 
-    # print('*************')
-    # print('outputs_ori:{}'.format(outputs_ori))
-    # print('*************')
-    # print('outputs_scal:{}'.format(outputs_scal))
+    print('*************')
+    print('outputs_ori:{}'.format(outputs_ori_list))
+    print('*************')
+    print('outputs_scal:{}'.format(outputs_scal))
+
+    orginal = X_test_left_list + y_test_list + X_test_right_list
+    prediction = X_test_left_list + outputs_ori_list + X_test_right_list
+
+    print(orginal)
+    print(prediction)
+
+    plt.plot(orginal, '-')
+    plt.plot(prediction, '*')
+    plt.show()
+
+
+
+
+
+
+
